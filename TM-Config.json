@@ -1,0 +1,9 @@
+{
+    "MANAGER": "dsm.local",
+    "PORT"   : "4119",
+    "APIKEY" : "",
+    "C1WS" : "workload.us-1.cloudone.trendmicro.com",
+    "C1API" : "ApiKey C1APIKey",
+    "DEFAULT_POLICYID" : 1,
+    "POLICY_SUFFIX" : ""
+}
