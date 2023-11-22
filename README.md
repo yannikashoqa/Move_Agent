@@ -1,15 +1,16 @@
 # Move DS Agentless Systems to C1WS
 
-
 AUTHOR		: Yanni Kashoqa
 
 TITLE		: Move DS Agentless Agents to Cloud One Workload Security
 
 DESCRIPTION	: This Powershell script will identify the local systems's policy and use it for the activatation of a newly installed agent from Cloud One Workload Security.
 
-
 FEATURES
 - Move Deep Security Agentless protected systems to Cloud One Workload Secuerity while maintaining the same policy that was previously migrated.
+- Use a proxy if available to conect to the internet
+- Script will match HostName, FQDN, and then any entry that contain the HostName.  Hostnames must be unique with the CSV file.
+- Script can also be used for assigning policies based on a CSV file that contains Names of systems and policies to be assigned.
 
 REQUIRMENTS
 - PowerShell 5.x
@@ -26,7 +27,10 @@ REQUIRMENTS
     "C1WS"   : "workload.us-1.cloudone.trendmicro.com",
     "C1API"  : "ApiKey C1APIKey",
     "DEFAULT_POLICYID" : 1,
-    "POLICY_SUFFIX" : ""
+    "POLICY_SUFFIX" : "",
+    "USE_PROXY" : true,
+    "PROXY_SERVER" : "10.0.0.10",
+    "PROXY_PORT" : "8080"
 }
 ~~~~
 
@@ -36,7 +40,10 @@ REQUIRMENTS
     "C1WS"   : "workload.us-1.cloudone.trendmicro.com",
     "C1API"  : "ApiKey C1APIKey",
     "DEFAULT_POLICYID" : 1,
-    "POLICY_SUFFIX" : ""
+    "POLICY_SUFFIX" : "",
+    "USE_PROXY" : true,
+    "PROXY_SERVER" : "10.0.0.10",
+    "PROXY_PORT" : "8080"
 }
 ~~~~
 
@@ -51,3 +58,6 @@ REQUIRMENTS
 - "C1API"  : Cloud One API Key with the format: ApiKey C1APIKey
 - "DEFAULT_POLICYID" : Policy ID to be applied incase the Agentless system did not have a policy assigned to it.
 - "POLICY_SUFFIX" : This is the date/time suffix that was added to the policies during the Policy Migration tool in Deep Security. Make sure to include the space before the text.  Here is an example:  " (2023-10-26T19:14:38Z DS_FQDN)"
+- "USE_PROXY" : Values are true or false.  Set to false if not using a proxy to get to the internet.
+- "PROXY_SERVER" : Your Proxy IP address
+- "PROXY_PORT" : Your Proxy Port
