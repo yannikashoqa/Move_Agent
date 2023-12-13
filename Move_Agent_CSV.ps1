@@ -1,12 +1,24 @@
-#  Version 0.2
+#  Version 0.3
 
 Clear-Host
 Write-Host "################################  Start of Script  ################################"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
 
-$Config = (Get-Content "$PSScriptRoot\TM-Config.json" -Raw) | ConvertFrom-Json
+$DS_SYSTEMS_LIST = "$PSScriptRoot\DS_Computers.csv"
+If (-Not (Test-Path -Path $DS_SYSTEMS_LIST)){
+    Write-Host "[ERROR] DS_Computers.csv File Not found"
+    Exit(0)
+}
+
+$ConfigFile = "$PSScriptRoot\TM-Config.json"
+If (-Not (Test-Path -Path $ConfigFile)){
+    Write-Host "[ERROR] Config File Not found"
+    Exit(0)
+}
+
+$Config = (Get-Content $ConfigFile -Raw) | ConvertFrom-Json
 $C1WS = $Config.C1WS
 $C1API = $Config.C1API
 $POLICY_SUFFIX = $Config.POLICY_SUFFIX
@@ -14,8 +26,7 @@ $DEFAULT_POLICYID = $Config.DEFAULT_POLICYID
 $USE_PROXY = $Config.USE_PROXY
 $PROXY_SERVER = $Config.PROXY_SERVER
 $PROXY_PORT = $Config.PROXY_PORT
-
-$DS_SYSTEMS_LIST = "$PSScriptRoot\DS_Computers.csv"
+$LOG_FILE = $Config.LOG_FILE
 
 $C1WS_headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 $C1WS_headers.Add("Authorization", $C1API)
@@ -27,9 +38,25 @@ $C1WS_HOST_URI = "https://" + $C1WS + "/api/"
 $HostName = [System.Net.Dns]::GetHostName()
 $HostNameFQDN = [System.Net.Dns]::GetHostByName($env:ComputerName).HostName
 
-Clear-Variable -Name SystemName
-Clear-Variable -Name SystemPolicy
-Clear-Variable -Name WS_Computer_PolicyID
+Clear-Variable -Name SystemName -ErrorAction SilentlyContinue
+Clear-Variable -Name SystemPolicy -ErrorAction SilentlyContinue
+Clear-Variable -Name WS_Computer_PolicyID -ErrorAction SilentlyContinue
+$Date = Get-Date
+
+# Check if Agent is already Installed
+$Service = "Trend Micro Deep Security Agent1"
+Try {
+	$Service_Obj = get-service -ComputerName $HostName -Name $Service -ErrorAction SilentlyContinue
+	If ($Service_Obj){
+		write-host "[INFO] Service Exist: $Service"
+		Add-Content $LOG_FILE "$Date    $HostName   INFO] Service Exist: $Service"
+		Exit(0)
+	}
+}
+Catch {
+	Write-Host  "[ERROR] Failed to retreive local Services: $_"
+    Add-Content $LOG_FILE "$Date    $HostName   [ERROR] Failed to retreive local Services: $_"
+}
 
 $Systems_List = Import-Csv $DS_SYSTEMS_LIST
 foreach ($System in $Systems_List){
@@ -46,12 +73,14 @@ foreach ($System in $Systems_List){
 }
 
 If($null -eq $SystemName){
-    Write-Host " System Not Found: " $HostName $HostNameFQDN
+    Write-Host "[INFO] System Not Found: " $HostName $HostNameFQDN
+    Add-Content $LOG_FILE "$Date    [INFO] System Not Found: $HostName $HostNameFQDN"
     Exit(0)
 }
 
 If ($null -eq $SystemPolicy -or $SystemPolicy -eq ""){
-    Write-Host "No Policy was found for $HostName. Using default Policy assignment with ID: $DEFAULT_POLICYID"
+    Write-Host "[INFO] No Policy was found for $HostName. Using default Policy assignment with ID: $DEFAULT_POLICYID"
+    Add-Content $LOG_FILE "$Date    $HostName   [INFO] No Policy was found for $HostName. Using default Policy assignment with ID: $DEFAULT_POLICYID"
     $WS_Computer_PolicyID = $DEFAULT_POLICYID
 }else {
     $WS_Search_PolicyName = $SystemPolicy + $POLICY_SUFFIX
@@ -77,17 +106,20 @@ If ($null -eq $SystemPolicy -or $SystemPolicy -eq ""){
         
         $WS_Computer_PolicyID = $WS_Search_Policy.policies.ID
         if ($WS_Search_Policy.policies.Count -eq 0){
-            Write-Host "Could not find policy: $WS_Search_PolicyName . Using Default Policy"
+            Write-Host "[INFO] Could not find policy: $WS_Search_PolicyName . Using Default Policy"
+            Add-Content $LOG_FILE "$Date    $HostName   [INFO] Could not find policy: $WS_Search_PolicyName . Using Default Policy"
             $WS_Computer_PolicyID = $DEFAULT_POLICYID
         }
     }
     catch {
         Write-Host "[ERROR]	Failed to search for Policy.	$_"
+        Add-Content $LOG_FILE "$Date    $HostName   [ERROR]	Failed to search for Policy.	$_"
         Exit(0)
     }
 }
 
-$WS_Computer_PolicyID
+Write-Host "[INFO] Workload Security Policy ID $WS_Computer_PolicyID will be assigned to: $SystemName"
+Add-Content $LOG_FILE "$Date    $HostName   [INFO] Workload Security Policy ID $WS_Computer_PolicyID will be assigned to: $SystemName"
 
 ###########################  End of Policy ID Lookup ###########################
 # Paste below your C1WS Agent deployment script and replace the activation line policyid entry as follow: "policyid:$WS_Computer_PolicyID"

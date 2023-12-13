@@ -8,5 +8,6 @@
     "POLICY_SUFFIX" : "",
     "USE_PROXY" : true,
     "PROXY_SERVER" : "10.0.0.10",
-    "PROXY_PORT" : "8080"
+    "PROXY_PORT" : "8080",
+    "LOG_FILE" : ""
 }

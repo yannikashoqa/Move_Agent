@@ -43,7 +43,8 @@ REQUIRMENTS
     "POLICY_SUFFIX" : "",
     "USE_PROXY" : true,
     "PROXY_SERVER" : "10.0.0.10",
-    "PROXY_PORT" : "8080"
+    "PROXY_PORT" : "8080",
+    "LOG_FILE" : "Path to logfile on local machine or network share"
 }
 ~~~~
 
@@ -61,3 +62,4 @@ REQUIRMENTS
 - "USE_PROXY" : Values are true or false.  Set to false if not using a proxy to get to the internet.
 - "PROXY_SERVER" : Your Proxy IP address
 - "PROXY_PORT" : Your Proxy Port
+- "LOG_FILE" : Path to logfile on local machine or network share.  For example use / for network shares: "//SERVER/SHAREEDFOLDER/Move_Agent.log"
